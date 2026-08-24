@@ -8,12 +8,27 @@ use App\Models\User;
 use App\Models\Withdrawal;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 
 class DatabaseSeeder extends Seeder
 {
     use WithoutModelEvents;
+
+    /**
+     * Filenames that actually exist in the main Starbiit app's
+     * storage/app/public/proofs — used here only so seeded demo deposits
+     * resolve to a real image via Deposit::proofOfPaymentUrl() instead of
+     * a 404. Not meaningful outside local development.
+     */
+    private const DEMO_PROOF_FILENAMES = [
+        '1763710282_gCBwrTbWgD4x.png',
+        '1764064194_UvE2XTQarGRI.png',
+        '1764593389_9tAUoCocAndn.png',
+        '1765366027_Gg1mhamD4C3u.jpeg',
+        '1767388109_aLTn0G43Rwbb.jpeg',
+        '1iHOr4Ff6ft2j3SpzGkCChGkyMuZgND6rtUaSEwk.png',
+        'QfsgtEHKIFATpHzp9BfK4IFH3G2INDRj7x3i3YHy.jpg',
+        'cW14MTVe7mVxHvFK4PqiL5zL0rWIXtu1AFMsbMMK.jpg',
+    ];
 
     /**
      * Seed the application's database.
@@ -35,44 +50,15 @@ class DatabaseSeeder extends Seeder
                     ->for($user)
                     ->create([
                         'cryptocurrency_id' => fn () => $cryptocurrencies->random()->id,
-                    ])
-                    ->each(function (Deposit $deposit) {
-                        if (fake()->boolean(70)) {
-                            $this->attachDemoProof($deposit);
-                        }
-                    });
+                        'proof_of_payment' => fn () => fake()->boolean(70)
+                            ? fake()->randomElement(self::DEMO_PROOF_FILENAMES)
+                            : null,
+                    ]);
 
                 Withdrawal::factory()
                     ->count(fake()->numberBetween(0, 4))
                     ->for($user)
                     ->create();
             });
-    }
-
-    /**
-     * Generate a placeholder "proof of payment" image so the deposit detail
-     * page has something to display without needing real uploaded files.
-     */
-    private function attachDemoProof(Deposit $deposit): void
-    {
-        $filename = 'demo_'.$deposit->id.'_'.Str::random(8).'.png';
-
-        $image = imagecreatetruecolor(640, 400);
-        imagefill($image, 0, 0, imagecolorallocate($image, 15, 23, 32));
-        imagefilledrectangle($image, 24, 24, 616, 96, imagecolorallocate($image, 16, 185, 129));
-        $white = imagecolorallocate($image, 255, 255, 255);
-        imagestring($image, 5, 40, 48, 'PROOF OF PAYMENT', $white);
-        imagestring($image, 4, 40, 140, 'Amount: $'.number_format((float) $deposit->amount, 2), $white);
-        imagestring($image, 4, 40, 170, 'Deposit #'.$deposit->id, $white);
-        imagestring($image, 3, 40, 200, 'Tx: '.Str::limit((string) $deposit->transaction_hash, 40), $white);
-
-        ob_start();
-        imagepng($image);
-        $contents = ob_get_clean();
-        imagedestroy($image);
-
-        Storage::disk('public')->put('proofs/'.$filename, $contents);
-
-        $deposit->update(['proof_of_payment' => $filename]);
     }
 }

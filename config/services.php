@@ -35,4 +35,20 @@ return [
         ],
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Starbiit (source app)
+    |--------------------------------------------------------------------------
+    |
+    | Starbiit Reports doesn't store deposit proof-of-payment files itself —
+    | it displays the ones uploaded in the main Starbiit app. This is the
+    | base URL those files are served from (Starbiit's own `storage:link`),
+    | e.g. {url}/storage/proofs/{filename}.
+    |
+    */
+
+    'starbiit' => [
+        'url' => env('STARBIIT_URL', 'http://be-starbiit.test'),
+    ],
+
 ];
