@@ -1,17 +1,10 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
-import { ArrowLeft, FileImage, ImageOff } from '@lucide/vue';
-import { ref } from 'vue';
+import { ArrowLeft } from '@lucide/vue';
 import Heading from '@/components/Heading.vue';
 import { Badge } from '@/components/ui/badge';
 import type { BadgeVariants } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-} from '@/components/ui/dialog';
 import { dashboard } from '@/routes';
 import { index } from '@/routes/reports';
 
@@ -21,7 +14,6 @@ type Deposit = {
     status: string;
     cryptocurrency: string | null;
     transaction_hash: string | null;
-    proof_of_payment_url: string | null;
     created_at: string | null;
     verified_at: string | null;
 };
@@ -63,8 +55,6 @@ const statusVariant: Record<string, BadgeVariants['variant']> = {
     failed: 'destructive',
     mismatch: 'destructive',
 };
-
-const previewUrl = ref<string | null>(null);
 </script>
 
 <template>
@@ -103,54 +93,46 @@ const previewUrl = ref<string | null>(null);
 
             <div
                 v-if="deposits.data.length"
-                class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
+                class="overflow-x-auto rounded-xl border border-sidebar-border/70 dark:border-sidebar-border"
             >
-                <Card v-for="deposit in deposits.data" :key="deposit.id" class="gap-0 overflow-hidden p-0">
-                    <button
-                        type="button"
-                        class="block aspect-video w-full cursor-pointer bg-muted"
-                        :disabled="!deposit.proof_of_payment_url"
-                        @click="previewUrl = deposit.proof_of_payment_url"
-                    >
-                        <img
-                            v-if="deposit.proof_of_payment_url"
-                            :src="deposit.proof_of_payment_url"
-                            :alt="`Proof of payment for deposit #${deposit.id}`"
-                            class="size-full object-cover"
-                        />
-                        <div
-                            v-else
-                            class="flex size-full flex-col items-center justify-center gap-1 text-muted-foreground"
+                <table class="w-full text-left text-sm">
+                    <thead class="border-b border-sidebar-border/70 dark:border-sidebar-border">
+                        <tr>
+                            <th class="px-4 py-3 font-medium">Amount</th>
+                            <th class="px-4 py-3 font-medium">Currency</th>
+                            <th class="px-4 py-3 font-medium">Status</th>
+                            <th class="px-4 py-3 font-medium">Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr
+                            v-for="deposit in deposits.data"
+                            :key="deposit.id"
+                            class="border-b border-sidebar-border/70 last:border-0 dark:border-sidebar-border"
                         >
-                            <ImageOff class="size-6" />
-                            <span class="text-xs">No proof uploaded</span>
-                        </div>
-                    </button>
-
-                    <div class="flex flex-col gap-2 p-4">
-                        <div class="flex items-center justify-between">
-                            <p class="text-lg font-semibold">
+                            <td class="px-4 py-3 font-medium">
                                 {{ currency.format(deposit.amount) }}
-                            </p>
-                            <Badge :variant="statusVariant[deposit.status] ?? 'outline'">
-                                {{ deposit.status }}
-                            </Badge>
-                        </div>
-                        <p v-if="deposit.cryptocurrency" class="text-sm text-muted-foreground">
-                            {{ deposit.cryptocurrency }}
-                        </p>
-                        <p class="text-xs text-muted-foreground">
-                            {{
-                                deposit.created_at
-                                    ? dateFormat.format(new Date(deposit.created_at))
-                                    : '—'
-                            }}
-                        </p>
-                    </div>
-                </Card>
+                            </td>
+                            <td class="px-4 py-3 text-muted-foreground">
+                                {{ deposit.cryptocurrency ?? '—' }}
+                            </td>
+                            <td class="px-4 py-3">
+                                <Badge :variant="statusVariant[deposit.status] ?? 'outline'">
+                                    {{ deposit.status }}
+                                </Badge>
+                            </td>
+                            <td class="px-4 py-3 text-muted-foreground">
+                                {{
+                                    deposit.created_at
+                                        ? dateFormat.format(new Date(deposit.created_at))
+                                        : '—'
+                                }}
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
             <Card v-else class="items-center gap-2 px-6 py-10 text-center">
-                <FileImage class="size-6 text-muted-foreground" />
                 <p class="text-sm text-muted-foreground">
                     This user has no deposits yet.
                 </p>
@@ -174,18 +156,4 @@ const previewUrl = ref<string | null>(null);
             </template>
         </div>
     </div>
-
-    <Dialog :open="!!previewUrl" @update:open="(open) => !open && (previewUrl = null)">
-        <DialogContent class="sm:max-w-2xl">
-            <DialogHeader>
-                <DialogTitle>Proof of payment</DialogTitle>
-            </DialogHeader>
-            <img
-                v-if="previewUrl"
-                :src="previewUrl"
-                alt="Proof of payment"
-                class="w-full rounded-lg border border-border"
-            />
-        </DialogContent>
-    </Dialog>
 </template>

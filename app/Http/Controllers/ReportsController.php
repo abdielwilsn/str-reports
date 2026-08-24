@@ -64,7 +64,6 @@ class ReportsController extends Controller
                 'status' => $deposit->status,
                 'cryptocurrency' => $deposit->cryptocurrency?->symbol,
                 'transaction_hash' => $deposit->transaction_hash,
-                'proof_of_payment_url' => $deposit->proof_of_payment_url,
                 'created_at' => $deposit->created_at?->toIso8601String(),
                 'verified_at' => $deposit->verified_at?->toIso8601String(),
             ]);

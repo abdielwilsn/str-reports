@@ -2,11 +2,9 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Support\Facades\Storage;
 
 class Deposit extends Model
 {
@@ -48,20 +46,5 @@ class Deposit extends Model
     public function cryptocurrency(): BelongsTo
     {
         return $this->belongsTo(Cryptocurrency::class);
-    }
-
-    /**
-     * Deposit proofs are uploaded in the main Starbiit app, not here.
-     * storage/app/public/proofs is a symlink into Starbiit's own proofs
-     * folder (both apps run on the same host), so this just resolves
-     * through this app's own "public" disk like normal.
-     */
-    protected function proofOfPaymentUrl(): Attribute
-    {
-        return Attribute::make(
-            get: fn () => $this->proof_of_payment
-                ? Storage::disk('public')->url('proofs/'.$this->proof_of_payment)
-                : null,
-        );
     }
 }
